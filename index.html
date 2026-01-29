@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AlPatik Fencing Performance Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f16;
+      --card: #141a26;
+      --muted: #8a93a8;
+      --text: #eef1f7;
+      --accent: #e11d48;
+      --accent-2: #f59e0b;
+      --success: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 24px 20px 16px;
+      background: linear-gradient(135deg, rgba(225, 29, 72, 0.2), rgba(245, 158, 11, 0.2));
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 20px;
+    }
+
+    .brand-badge {
+      height: 40px;
+      width: 40px;
+      background: var(--accent);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .toolbar {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .toggle {
+      background: var(--card);
+      border-radius: 999px;
+      padding: 6px;
+      display: inline-flex;
+      gap: 6px;
+    }
+
+    .toggle button {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .toggle button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    main {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #0f1420;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    button.primary {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 600;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 600;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .table th,
+    .table td {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 8px;
+      text-align: left;
+    }
+
+    .table th {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .scroll {
+      overflow-x: auto;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(34, 197, 94, 0.16);
+      color: var(--success);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .chart-wrap {
+      background: #0f1420;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .csv-guide {
+      background: #0f1420;
+      border-radius: 12px;
+      padding: 12px;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      color: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-badge">AP</div>
+      <div>
+        <div data-i18n="title">AlPatik Performance Tracker</div>
+        <div class="muted" data-i18n="subtitle">Single-page coach dashboard for fencing athletes</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="toggle" aria-label="Language toggle">
+        <button class="active" data-lang="en">English</button>
+        <button data-lang="ar">العربية</button>
+      </div>
+      <span class="pill" data-i18n="offline">Works offline · Saves on device</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2 data-i18n="athleteProfile">Athlete Profile</h2>
+      <div class="grid two">
+        <div>
+          <label data-i18n="athleteName">Name</label>
+          <input id="athleteName" placeholder="Athlete name" />
+        </div>
+        <div>
+          <label data-i18n="weapon">Weapon</label>
+          <select id="athleteWeapon">
+            <option value="Foil">Foil</option>
+            <option value="Epee">Epee</option>
+            <option value="Sabre">Sabre</option>
+          </select>
+        </div>
+        <div>
+          <label data-i18n="ageGroup">Age Group</label>
+          <input id="athleteAge" placeholder="U17, Senior" />
+        </div>
+        <div>
+          <label data-i18n="dominantSide">Dominant Side</label>
+          <select id="athleteSide">
+            <option value="Right">Right</option>
+            <option value="Left">Left</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top: 12px;">
+        <label data-i18n="notes">Coach Notes</label>
+        <textarea id="athleteNotes" rows="3" placeholder="Notes"></textarea>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="bodyTracking">Body Tracking</h2>
+      <div class="grid two">
+        <div>
+          <label data-i18n="metric">Metric</label>
+          <input id="bodyMetric" placeholder="Weight, Body Fat" />
+        </div>
+        <div>
+          <label data-i18n="value">Value</label>
+          <input id="bodyValue" type="number" placeholder="70" />
+        </div>
+        <div>
+          <label data-i18n="unit">Unit</label>
+          <input id="bodyUnit" placeholder="kg, %" />
+        </div>
+        <div>
+          <label data-i18n="date">Date</label>
+          <input id="bodyDate" type="date" />
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary" id="addBody" data-i18n="addEntry">Add Entry</button>
+        <button class="secondary" id="clearBody" data-i18n="clear">Clear</button>
+      </div>
+      <div class="scroll" style="margin-top: 12px;">
+        <table class="table" id="bodyTable">
+          <thead>
+            <tr>
+              <th data-i18n="metric">Metric</th>
+              <th data-i18n="value">Value</th>
+              <th data-i18n="unit">Unit</th>
+              <th data-i18n="date">Date</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="agilityPerformance">Agility & Performance Tests</h2>
+      <div class="grid two">
+        <div>
+          <label data-i18n="testName">Test Name</label>
+          <input id="testName" placeholder="Lunge Speed" />
+        </div>
+        <div>
+          <label data-i18n="testValue">Result</label>
+          <input id="testValue" type="number" placeholder="0.42" />
+        </div>
+        <div>
+          <label data-i18n="unit">Unit</label>
+          <input id="testUnit" placeholder="seconds, m/s" />
+        </div>
+        <div>
+          <label data-i18n="attempts">Attempts</label>
+          <input id="testAttempts" type="number" placeholder="3" />
+        </div>
+        <div>
+          <label data-i18n="date">Date</label>
+          <input id="testDate" type="date" />
+        </div>
+        <div>
+          <label data-i18n="protocol">Protocol</label>
+          <input id="testProtocol" placeholder="Distance 2m" />
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary" id="addTest" data-i18n="addEntry">Add Entry</button>
+        <button class="secondary" id="clearTest" data-i18n="clear">Clear</button>
+      </div>
+      <div class="scroll" style="margin-top: 12px;">
+        <table class="table" id="testTable">
+          <thead>
+            <tr>
+              <th data-i18n="testName">Test Name</th>
+              <th data-i18n="testValue">Result</th>
+              <th data-i18n="unit">Unit</th>
+              <th data-i18n="attempts">Attempts</th>
+              <th data-i18n="date">Date</th>
+              <th data-i18n="protocol">Protocol</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="tournament">Tournament Log</h2>
+      <div class="grid two">
+        <div>
+          <label data-i18n="tournamentName">Tournament Name</label>
+          <input id="tournamentName" placeholder="Riyadh Open" />
+        </div>
+        <div>
+          <label data-i18n="tournamentDate">Date</label>
+          <input id="tournamentDate" type="date" />
+        </div>
+        <div>
+          <label data-i18n="placement">Placement</label>
+          <input id="tournamentPlacement" placeholder="5th" />
+        </div>
+        <div>
+          <label data-i18n="points">Points</label>
+          <input id="tournamentPoints" type="number" placeholder="120" />
+        </div>
+        <div>
+          <label data-i18n="wins">Wins</label>
+          <input id="tournamentWins" type="number" placeholder="6" />
+        </div>
+        <div>
+          <label data-i18n="losses">Losses</label>
+          <input id="tournamentLosses" type="number" placeholder="2" />
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary" id="addTournament" data-i18n="addEntry">Add Entry</button>
+        <button class="secondary" id="clearTournament" data-i18n="clear">Clear</button>
+      </div>
+      <div class="scroll" style="margin-top: 12px;">
+        <table class="table" id="tournamentTable">
+          <thead>
+            <tr>
+              <th data-i18n="tournamentName">Tournament</th>
+              <th data-i18n="tournamentDate">Date</th>
+              <th data-i18n="placement">Placement</th>
+              <th data-i18n="points">Points</th>
+              <th data-i18n="wins">Wins</th>
+              <th data-i18n="losses">Losses</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="predictions">Predictions & Graphs</h2>
+      <div class="grid two">
+        <div class="chart-wrap">
+          <canvas id="agilityChart" height="180"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="rankingChart" height="180"></canvas>
+        </div>
+      </div>
+      <div class="grid two" style="margin-top: 12px;">
+        <div>
+          <label data-i18n="opponentRanking">Opponent Ranking</label>
+          <input id="opponentRanking" type="number" placeholder="25" />
+        </div>
+        <div>
+          <label data-i18n="athleteRanking">Athlete Ranking</label>
+          <input id="athleteRanking" type="number" placeholder="18" />
+        </div>
+        <div>
+          <label data-i18n="injuryLoad">Recent Load (0-10)</label>
+          <input id="injuryLoad" type="number" placeholder="6" min="0" max="10" />
+        </div>
+        <div>
+          <label data-i18n="sleep">Sleep avg (hours)</label>
+          <input id="sleepHours" type="number" placeholder="7" min="0" max="12" />
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="primary" id="runPrediction" data-i18n="runPrediction">Run Prediction</button>
+      </div>
+      <div id="predictionResults" class="grid two" style="margin-top: 12px;"></div>
+      <p class="muted" data-i18n="predictionNote">
+        Predictions are simple heuristic estimates for MVP. Replace with ML later.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="export">Export / Backup</h2>
+      <p class="muted" data-i18n="exportInfo">
+        Download JSON for laptop backup, or CSV templates for future import.
+      </p>
+      <div class="footer-actions">
+        <button class="primary" id="exportJson" data-i18n="exportJson">Export JSON</button>
+        <button class="secondary" id="exportCsv" data-i18n="exportCsv">Export CSV</button>
+      </div>
+      <div style="margin-top: 12px;">
+        <div class="muted" data-i18n="csvStructure">CSV Structure (for parser later)</div>
+        <div class="csv-guide">
+BodyTracking.csv
+metric,value,unit,date
+Weight,70,kg,2024-01-10
+Body Fat,12,%,2024-01-10
+
+AgilityTests.csv
+test_name,result,unit,attempts,date,protocol
+Lunge Speed,0.42,sec,3,2024-01-10,2m sprint
+
+Tournaments.csv
+name,date,placement,points,wins,losses
+Riyadh Open,2024-02-15,5th,120,6,2
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      profile: {
+        name: "",
+        weapon: "Foil",
+        ageGroup: "",
+        side: "Right",
+        notes: "",
+      },
+      bodyEntries: [],
+      agilityEntries: [],
+      tournamentEntries: [],
+    };
+
+    const translations = {
+      en: {
+        title: "AlPatik Performance Tracker",
+        subtitle: "Single-page coach dashboard for fencing athletes",
+        offline: "Works offline · Saves on device",
+        athleteProfile: "Athlete Profile",
+        athleteName: "Name",
+        weapon: "Weapon",
+        ageGroup: "Age Group",
+        dominantSide: "Dominant Side",
+        notes: "Coach Notes",
+        bodyTracking: "Body Tracking",
+        metric: "Metric",
+        value: "Value",
+        unit: "Unit",
+        date: "Date",
+        addEntry: "Add Entry",
+        clear: "Clear",
+        agilityPerformance: "Agility & Performance Tests",
+        testName: "Test Name",
+        testValue: "Result",
+        attempts: "Attempts",
+        protocol: "Protocol",
+        tournament: "Tournament Log",
+        tournamentName: "Tournament Name",
+        tournamentDate: "Date",
+        placement: "Placement",
+        points: "Points",
+        wins: "Wins",
+        losses: "Losses",
+        predictions: "Predictions & Graphs",
+        opponentRanking: "Opponent Ranking",
+        athleteRanking: "Athlete Ranking",
+        injuryLoad: "Recent Load (0-10)",
+        sleep: "Sleep avg (hours)",
+        runPrediction: "Run Prediction",
+        predictionNote: "Predictions are simple heuristic estimates for MVP. Replace with ML later.",
+        export: "Export / Backup",
+        exportInfo: "Download JSON for laptop backup, or CSV templates for future import.",
+        exportJson: "Export JSON",
+        exportCsv: "Export CSV",
+        csvStructure: "CSV Structure (for parser later)",
+      },
+      ar: {
+        title: "متتبع أداء الباتيك",
+        subtitle: "لوحة تحكم للمدرب في صفحة واحدة",
+        offline: "يعمل بدون إنترنت · يحفظ على الجهاز",
+        athleteProfile: "ملف اللاعب",
+        athleteName: "الاسم",
+        weapon: "السلاح",
+        ageGroup: "الفئة العمرية",
+        dominantSide: "اليد المهيمنة",
+        notes: "ملاحظات المدرب",
+        bodyTracking: "متابعة القياسات",
+        metric: "المؤشر",
+        value: "القيمة",
+        unit: "الوحدة",
+        date: "التاريخ",
+        addEntry: "إضافة",
+        clear: "مسح",
+        agilityPerformance: "اختبارات السرعة والأداء",
+        testName: "اسم الاختبار",
+        testValue: "النتيجة",
+        attempts: "عدد المحاولات",
+        protocol: "البروتوكول",
+        tournament: "سجل البطولات",
+        tournamentName: "اسم البطولة",
+        tournamentDate: "التاريخ",
+        placement: "المركز",
+        points: "النقاط",
+        wins: "انتصارات",
+        losses: "خسائر",
+        predictions: "التنبؤات والرسوم",
+        opponentRanking: "ترتيب الخصم",
+        athleteRanking: "ترتيب اللاعب",
+        injuryLoad: "معدل الحمل (0-10)",
+        sleep: "متوسط النوم (ساعات)",
+        runPrediction: "تشغيل التنبؤ",
+        predictionNote: "التنبؤات تقديرية مبدئية ويمكن استبدالها لاحقًا بنماذج متقدمة.",
+        export: "تصدير / نسخة احتياطية",
+        exportInfo: "قم بتنزيل JSON للنسخ على اللابتوب أو CSV للاستيراد لاحقًا.",
+        exportJson: "تصدير JSON",
+        exportCsv: "تصدير CSV",
+        csvStructure: "هيكل CSV (للمعالجة لاحقًا)",
+      },
+    };
+
+    const bodyTable = document.querySelector("#bodyTable tbody");
+    const testTable = document.querySelector("#testTable tbody");
+    const tournamentTable = document.querySelector("#tournamentTable tbody");
+
+    const agilityChart = new Chart(document.getElementById("agilityChart"), {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Lunge Speed",
+            data: [],
+            borderColor: "#e11d48",
+            tension: 0.3,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            labels: { color: "#e2e8f0" },
+          },
+        },
+        scales: {
+          x: { ticks: { color: "#94a3b8" } },
+          y: { ticks: { color: "#94a3b8" } },
+        },
+      },
+    });
+
+    const rankingChart = new Chart(document.getElementById("rankingChart"), {
+      type: "bar",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Ranking Points",
+            data: [],
+            backgroundColor: "#f59e0b",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            labels: { color: "#e2e8f0" },
+          },
+        },
+        scales: {
+          x: { ticks: { color: "#94a3b8" } },
+          y: { ticks: { color: "#94a3b8" } },
+        },
+      },
+    });
+
+    const saveState = () => {
+      localStorage.setItem("alpatikState", JSON.stringify(state));
+    };
+
+    const loadState = () => {
+      const stored = localStorage.getItem("alpatikState");
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+      Object.assign(state, parsed);
+    };
+
+    const renderTables = () => {
+      bodyTable.innerHTML = state.bodyEntries
+        .map(
+          (entry) => `
+          <tr>
+            <td>${entry.metric}</td>
+            <td>${entry.value}</td>
+            <td>${entry.unit}</td>
+            <td>${entry.date}</td>
+          </tr>
+        `
+        )
+        .join("");
+
+      testTable.innerHTML = state.agilityEntries
+        .map(
+          (entry) => `
+          <tr>
+            <td>${entry.name}</td>
+            <td>${entry.value}</td>
+            <td>${entry.unit}</td>
+            <td>${entry.attempts}</td>
+            <td>${entry.date}</td>
+            <td>${entry.protocol}</td>
+          </tr>
+        `
+        )
+        .join("");
+
+      tournamentTable.innerHTML = state.tournamentEntries
+        .map(
+          (entry) => `
+          <tr>
+            <td>${entry.name}</td>
+            <td>${entry.date}</td>
+            <td>${entry.placement}</td>
+            <td>${entry.points}</td>
+            <td>${entry.wins}</td>
+            <td>${entry.losses}</td>
+          </tr>
+        `
+        )
+        .join("");
+
+      updateCharts();
+    };
+
+    const updateCharts = () => {
+      const agility = state.agilityEntries.filter((entry) => entry.name.toLowerCase().includes("lunge"));
+      agilityChart.data.labels = agility.map((entry) => entry.date || "-");
+      agilityChart.data.datasets[0].data = agility.map((entry) => Number(entry.value));
+      agilityChart.update();
+
+      rankingChart.data.labels = state.tournamentEntries.map((entry) => entry.name);
+      rankingChart.data.datasets[0].data = state.tournamentEntries.map((entry) => Number(entry.points));
+      rankingChart.update();
+    };
+
+    const bindProfileInputs = () => {
+      const nameInput = document.getElementById("athleteName");
+      const weaponInput = document.getElementById("athleteWeapon");
+      const ageInput = document.getElementById("athleteAge");
+      const sideInput = document.getElementById("athleteSide");
+      const notesInput = document.getElementById("athleteNotes");
+
+      nameInput.value = state.profile.name || "";
+      weaponInput.value = state.profile.weapon || "Foil";
+      ageInput.value = state.profile.ageGroup || "";
+      sideInput.value = state.profile.side || "Right";
+      notesInput.value = state.profile.notes || "";
+
+      [nameInput, weaponInput, ageInput, sideInput, notesInput].forEach((input) => {
+        input.addEventListener("input", () => {
+          state.profile = {
+            name: nameInput.value,
+            weapon: weaponInput.value,
+            ageGroup: ageInput.value,
+            side: sideInput.value,
+            notes: notesInput.value,
+          };
+          saveState();
+        });
+      });
+    };
+
+    document.getElementById("addBody").addEventListener("click", () => {
+      const metric = document.getElementById("bodyMetric").value.trim();
+      const value = document.getElementById("bodyValue").value.trim();
+      const unit = document.getElementById("bodyUnit").value.trim();
+      const date = document.getElementById("bodyDate").value;
+      if (!metric || !value || !unit || !date) return;
+
+      state.bodyEntries.unshift({ metric, value, unit, date });
+      saveState();
+      renderTables();
+    });
+
+    document.getElementById("clearBody").addEventListener("click", () => {
+      state.bodyEntries = [];
+      saveState();
+      renderTables();
+    });
+
+    document.getElementById("addTest").addEventListener("click", () => {
+      const name = document.getElementById("testName").value.trim();
+      const value = document.getElementById("testValue").value.trim();
+      const unit = document.getElementById("testUnit").value.trim();
+      const attempts = document.getElementById("testAttempts").value.trim();
+      const date = document.getElementById("testDate").value;
+      const protocol = document.getElementById("testProtocol").value.trim();
+      if (!name || !value || !unit || !date) return;
+
+      state.agilityEntries.unshift({ name, value, unit, attempts, date, protocol });
+      saveState();
+      renderTables();
+    });
+
+    document.getElementById("clearTest").addEventListener("click", () => {
+      state.agilityEntries = [];
+      saveState();
+      renderTables();
+    });
+
+    document.getElementById("addTournament").addEventListener("click", () => {
+      const name = document.getElementById("tournamentName").value.trim();
+      const date = document.getElementById("tournamentDate").value;
+      const placement = document.getElementById("tournamentPlacement").value.trim();
+      const points = document.getElementById("tournamentPoints").value.trim();
+      const wins = document.getElementById("tournamentWins").value.trim();
+      const losses = document.getElementById("tournamentLosses").value.trim();
+      if (!name || !date) return;
+
+      state.tournamentEntries.unshift({ name, date, placement, points, wins, losses });
+      saveState();
+      renderTables();
+    });
+
+    document.getElementById("clearTournament").addEventListener("click", () => {
+      state.tournamentEntries = [];
+      saveState();
+      renderTables();
+    });
+
+    document.getElementById("runPrediction").addEventListener("click", () => {
+      const opponentRanking = Number(document.getElementById("opponentRanking").value || 0);
+      const athleteRanking = Number(document.getElementById("athleteRanking").value || 0);
+      const injuryLoad = Number(document.getElementById("injuryLoad").value || 0);
+      const sleepHours = Number(document.getElementById("sleepHours").value || 0);
+
+      const rankingDelta = opponentRanking - athleteRanking;
+      const baseWinChance = 0.5 + Math.max(Math.min(rankingDelta * 0.01, 0.25), -0.25);
+      const loadPenalty = Math.min(injuryLoad * 0.03, 0.3);
+      const sleepBonus = Math.min((sleepHours - 6) * 0.02, 0.1);
+      const winChance = Math.max(Math.min(baseWinChance - loadPenalty + sleepBonus, 0.95), 0.05);
+      const projectedPoints = Math.max(0, 100 + rankingDelta * 2 + (sleepHours * 3));
+      const injuryRisk = Math.min(Math.max(0.2 + injuryLoad * 0.08 - sleepHours * 0.02, 0), 0.95);
+
+      const results = document.getElementById("predictionResults");
+      results.innerHTML = `
+        <div class="card" style="background:#0f1420;">
+          <h3 style="margin-top:0;" data-i18n="winChance">Win Chance</h3>
+          <div style="font-size: 28px; font-weight: 700;">${(winChance * 100).toFixed(0)}%</div>
+        </div>
+        <div class="card" style="background:#0f1420;">
+          <h3 style="margin-top:0;" data-i18n="rankingProjection">Ranking Projection</h3>
+          <div style="font-size: 28px; font-weight: 700;">${projectedPoints.toFixed(0)} pts</div>
+        </div>
+        <div class="card" style="background:#0f1420;">
+          <h3 style="margin-top:0;" data-i18n="injuryRisk">Injury Risk</h3>
+          <div style="font-size: 28px; font-weight: 700;">${(injuryRisk * 100).toFixed(0)}%</div>
+        </div>
+      `;
+      applyTranslations(currentLang);
+    });
+
+    const exportJson = () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      downloadFile(blob, "alpatik-data.json");
+    };
+
+    const exportCsv = () => {
+      const bodyCsv = ["metric,value,unit,date"].concat(
+        state.bodyEntries.map((entry) => `${entry.metric},${entry.value},${entry.unit},${entry.date}`)
+      );
+      const agilityCsv = ["test_name,result,unit,attempts,date,protocol"].concat(
+        state.agilityEntries.map(
+          (entry) =>
+            `${entry.name},${entry.value},${entry.unit},${entry.attempts || ""},${entry.date},${entry.protocol || ""}`
+        )
+      );
+      const tournamentCsv = ["name,date,placement,points,wins,losses"].concat(
+        state.tournamentEntries.map(
+          (entry) =>
+            `${entry.name},${entry.date},${entry.placement || ""},${entry.points || ""},${entry.wins || ""},${entry.losses || ""}`
+        )
+      );
+
+      const zipContent = [
+        `BodyTracking.csv\n${bodyCsv.join("\n")}`,
+        `AgilityTests.csv\n${agilityCsv.join("\n")}`,
+        `Tournaments.csv\n${tournamentCsv.join("\n")}`,
+      ].join("\n\n");
+
+      const blob = new Blob([zipContent], { type: "text/plain" });
+      downloadFile(blob, "alpatik-export.txt");
+    };
+
+    const downloadFile = (blob, filename) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    document.getElementById("exportJson").addEventListener("click", exportJson);
+    document.getElementById("exportCsv").addEventListener("click", exportCsv);
+
+    let currentLang = "en";
+    const applyTranslations = (lang) => {
+      const dict = translations[lang];
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        const key = node.getAttribute("data-i18n");
+        if (dict[key]) {
+          node.textContent = dict[key];
+        }
+      });
+    };
+
+    document.querySelectorAll(".toggle button").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".toggle button").forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
+        currentLang = button.dataset.lang;
+        applyTranslations(currentLang);
+      });
+    });
+
+    loadState();
+    bindProfileInputs();
+    renderTables();
+    applyTranslations(currentLang);
+  </script>
+</body>
+</html>
